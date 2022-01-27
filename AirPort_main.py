@@ -15,6 +15,7 @@ alib.getPCA() #PCAの実行
 labels = alib.getKmeans(6,111) #kmeansの実行
 
 alib.getHistgram(df_data, labels)
+alib.getTtest(df_data, labels)
 
 #2019年データの取り込み
 #新規データの取り込み
@@ -34,6 +35,11 @@ for i in svc_predict_test:
 rate = sum / len(svc_predict_test) * 100
 print('危険日 = %.2f' % sum)
 print('危険度 = %.2f' % rate)
+
+#20220128 テストデータでのリスククラスタと他のクラスタの２群の平均値の比較
+print('Test Data')
+alib.getTtest(df_test, svc_predict_test)
+
 
 #20220125 SVMでの検証(リスククラスタを使わない場合)
 #PCA->SVMでの教師モデルでテストデータの分類を実施した場合、すべて安全とみなされた。

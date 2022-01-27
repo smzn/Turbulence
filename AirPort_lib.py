@@ -14,6 +14,7 @@ from sklearn.metrics import plot_confusion_matrix
 from sklearn.metrics import recall_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import classification_report
+import scipy #等分散性の検定(F件検定)を行うためのライブラリ
 
 class AirPort_lib :
     def __init__(self, df_data, n_components):
@@ -44,7 +45,7 @@ class AirPort_lib :
         self.explained_variance = self.pca.explained_variance_ #固有値
         #print(self.pca.explained_variance_) 
         self.explained_variance_ratio = self.pca.explained_variance_ratio_ #因子寄与率
-        print(self.explained_variance_ratio)
+        #print(self.explained_variance_ratio)
         self.saveCSV(self.feature, './csv/feature.csv')
 
     def transPCA(self, df_test): #検証データを主成分を使って変換
@@ -61,9 +62,9 @@ class AirPort_lib :
         self.kmodel_cluster_centers = kmodel.cluster_centers_
         self.kmodel_inertia = kmodel.inertia_
         print(kmodel.labels_) #kmeansの結果ラベル
-        print(kmodel.labels_.shape)
+        #print(kmodel.labels_.shape)
         #print(kmodel.cluster_centers_) #クラスタの中心座標
-        print(kmodel.inertia_) #最も近いクラスタ中心までの距離の二乗和
+        #print(kmodel.inertia_) #最も近いクラスタ中心までの距離の二乗和
         plt.scatter(self.feature[:,0],self.feature[:,1], c=kmodel.labels_)
         plt.scatter(kmodel.cluster_centers_[:,0], kmodel.cluster_centers_[:,1],s=250, marker='*',c='red')
         plt.grid()
@@ -159,3 +160,20 @@ class AirPort_lib :
 
     def getdf_data_sc(self):
         return self.df_data_sc
+    
+    def getTtest(self, df_data, labels):
+        df_data['kmeans'] = labels #ラベルを追加
+        df_data_risk = df_data[(df_data['kmeans'] == 0 )] #危険クラスタのみ抽出
+        df_data_others = df_data[(df_data['kmeans'] != 0 )] #危険クラスタのみ抽出
+        graph_list = ['fx106_03_500spd','WA_700_12_hum', 'MA_500_12_hum','fx106_03_500shear']
+        # 等分散性の検定を行う。
+        for i in graph_list:
+            print(i)
+            stat, p = scipy.stats.bartlett(df_data_risk[i], df_data_others[i])
+            print('Bartlett p_value = {0}'.format(p))
+            if p >= 0.05:
+                stat, p = scipy.stats.ttest_ind(df_data_risk[i], df_data_others[i])
+                print('T Test p_value = {0}'.format(p))
+            elif p < 0.05:
+                stat, p = scipy.stats.ttest_ind(df_data_risk[i], df_data_others[i], equal_var=False)
+                print('Welch p_value = {0}'.format(p))
